@@ -151,6 +151,8 @@ using the vectors from *your* database:
 3. **Distance** — drag two vectors to see cosine / euclidean / dot change; real cosine matrix between stored vectors.
 4. **Database** — `vector(768)` schema, EF Core LINQ, and an animated `VECTOR_DISTANCE` full scan.
 5. **Indexing** — DiskANN greedy graph search animation + `CREATE VECTOR INDEX` / `VECTOR_SEARCH` (not yet used in this repo).
+6. **Pipeline** — build-time vs. query-time flow of this repo.
+7. **Big picture** — same pipeline with enterprise / school / public-sector nouns, how RAG uses it, operating mechanisms it enables, and applications by sector.
 
 Regenerate the data file after re-embedding (needs Ollama for the sample queries):
 

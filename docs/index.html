@@ -27,6 +27,7 @@
       <a href="#distance">Distance</a>
       <a href="#database">Database</a>
       <a href="#index">Indexing</a>
+      <a href="#apply">Applications</a>
       <a class="gh" href="https://github.com/psoszynski/movie-recommender" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
   </nav>
@@ -377,6 +378,138 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
         <li><code>for-user</code> — weighted centroid of a user's ≥4★ vectors; no model call</li>
       </ol>
     </div>
+  </div>
+</section>
+
+<!-- ============================================================ 07 big picture -->
+<section id="apply" class="section">
+  <div class="section-head">
+    <span class="step">07</span>
+    <h2>Beyond movies: the big picture</h2>
+    <p>Nothing above is about films. The pipeline is <b>text → vector → nearest neighbours → filter</b>, and
+       every organisation is full of text nobody can find: tickets, contracts, policies, lesson plans, case
+       files, product descriptions, emails, code. Swap the nouns and the same 9 ms query answers
+       <em>"has anyone dealt with this before?"</em> for any of them.</p>
+  </div>
+
+  <div class="card">
+    <h3>Same pipeline, different nouns</h3>
+    <table class="swap-table">
+      <thead><tr><th></th><th>This repo</th><th>An enterprise</th><th>A school</th><th>A public office</th></tr></thead>
+      <tbody>
+        <tr><td>Source</td><td>MovieLens CSV + TMDB</td><td>SharePoint, Confluence, CRM, mailboxes</td><td>Curriculum, lesson plans, library, LMS</td><td>Regulations, case files, FAQs, forms</td></tr>
+        <tr><td>Unit embedded</td><td>one movie (title + genres + overview)</td><td>a 300–800 token chunk of a document</td><td>one learning resource / exercise</td><td>one article of a regulation, one FAQ</td></tr>
+        <tr><td>Metadata filter</td><td><code>Year ≥ 2000</code>, <code>RatingCount ≥ 10</code></td><td>department, <b>who may read it</b>, date</td><td>grade, subject, language</td><td>jurisdiction, in-force date</td></tr>
+        <tr><td>Query</td><td>"lonely robot falls in love"</td><td>"how do we handle a GDPR access request?"</td><td>"fractions explained with pizza for 9-year-olds"</td><td>"can I build a shed without a permit?"</td></tr>
+        <tr><td>Result</td><td>top-10 titles</td><td colspan="3">top-<em>k</em> passages — shown directly, or handed to an LLM to write a <b>grounded</b> answer (RAG)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rag-grid">
+    <div class="card">
+      <h3>RAG — retrieval-augmented generation</h3>
+      <p class="muted small">An LLM only knows what was in its training data and what you paste into the prompt. RAG uses
+         the vector search from this page to pick <em>what to paste</em>.</p>
+      <svg id="rag-svg" viewBox="0 0 560 300"></svg>
+    </div>
+    <div class="card">
+      <h3>Why retrieval instead of fine-tuning</h3>
+      <ul class="facts">
+        <li><b>Always current</b> — update a row, the next answer uses it; no retraining</li>
+        <li><b>Permission-aware</b> — the <code>WHERE</code> clause runs <em>before</em> the LLM ever sees a word; row-level security applies</li>
+        <li><b>Cites its sources</b> — every answer links back to the chunks it was built from</li>
+        <li><b>Cheap to try</b> — one embedding model, one table, one query; no GPUs on your side</li>
+        <li><b>Auditable</b> — log the question, the retrieved ids and the answer in the same database</li>
+      </ul>
+      <h3 style="margin-top:1.25rem">What the LLM adds</h3>
+      <ul class="facts">
+        <li>Synthesises several passages into one answer in the user's language</li>
+        <li>Can say <em>"not found in our documents"</em> instead of guessing — if you tell it to</li>
+        <li>Is interchangeable: Azure OpenAI, Foundry, or a local model via Ollama — the retrieval layer doesn't change</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub-head">Mechanisms that change how an organisation operates</h3>
+  <div class="mech-grid">
+    <div class="card mech"><span class="mech-icon">⌕</span><b>Find by meaning across silos</b><p>One query over tickets, wikis, contracts and chats, regardless of wording, synonyms or language. The "where was that?" tax disappears.</p></div>
+    <div class="card mech"><span class="mech-icon">⇄</span><b>Route and triage automatically</b><p>Embed an incoming ticket or email, find the nearest <em>already-labelled</em> ones, inherit their team and priority. Classification with zero training.</p></div>
+    <div class="card mech"><span class="mech-icon">≡</span><b>Deduplicate and cluster</b><p>Near-identical incidents, duplicate supplier records, overlapping policies — anything with cosine distance &lt; 0.1 is a candidate for merging.</p></div>
+    <div class="card mech"><span class="mech-icon">★</span><b>Recommend</b><p>Exactly <code>for-user</code>: the centroid of what someone read, bought or completed becomes a query. Works for courses, products, articles, job postings.</p></div>
+    <div class="card mech"><span class="mech-icon">◎</span><b>Ask-your-data assistants</b><p>RAG over internal documents gives staff and citizens a 24/7 answer with a citation, and tells you which questions had <em>no</em> good document.</p></div>
+    <div class="card mech"><span class="mech-icon">⚠</span><b>Spot the unusual</b><p>A new record whose nearest neighbour is far away is novel: a fraud pattern, an unprecedented complaint, a contract clause nobody has signed before.</p></div>
+    <div class="card mech"><span class="mech-icon">⊕</span><b>Hybrid, not either/or</b><p>Vectors for meaning, SQL for facts: <code>WHERE Status='open' AND Region='EU' ORDER BY VECTOR_DISTANCE</code>. One engine, one transaction, one backup.</p></div>
+    <div class="card mech"><span class="mech-icon">⟳</span><b>Learn what people actually ask</b><p>Cluster the <em>query</em> vectors. Dense clusters with poor results show exactly which document, FAQ or course is missing.</p></div>
+  </div>
+
+  <h3 class="sub-head">Where it applies</h3>
+  <div class="apps-grid">
+    <div class="card app">
+      <h4>Enterprise</h4>
+      <ul>
+        <li>Knowledge base &amp; policy search for employees</li>
+        <li>Help-desk ticket deduplication and routing</li>
+        <li>Contract clause retrieval and comparison</li>
+        <li>Onboarding assistant grounded in internal docs</li>
+        <li>Expert finding — "who has worked on something like this?"</li>
+      </ul>
+    </div>
+    <div class="card app">
+      <h4>Schools &amp; universities</h4>
+      <ul>
+        <li>Find learning materials by concept, not title, across grades and languages</li>
+        <li>Recommend exercises matched to a student's recent work</li>
+        <li>Tutoring assistant that answers only from the approved curriculum</li>
+        <li>Detect overlapping or duplicated course content</li>
+        <li>Research paper and thesis discovery</li>
+      </ul>
+    </div>
+    <div class="card app">
+      <h4>Public sector</h4>
+      <ul>
+        <li>Citizen portal: plain-language questions → the right regulation or form</li>
+        <li>Case-worker assistant over precedents and guidance</li>
+        <li>Legislation cross-referencing: "which articles touch this topic?"</li>
+        <li>Routing citizen correspondence to the right department</li>
+        <li>Multilingual access without translating the corpus</li>
+      </ul>
+    </div>
+    <div class="card app">
+      <h4>Healthcare</h4>
+      <ul>
+        <li>Clinical guideline retrieval at the point of care</li>
+        <li>Similar-case lookup from de-identified notes</li>
+        <li>Patient-facing FAQ grounded in the hospital's own material</li>
+        <li>Mapping free-text symptoms to coded terminology</li>
+      </ul>
+    </div>
+    <div class="card app">
+      <h4>Customer-facing</h4>
+      <ul>
+        <li>Product search that understands "something warm for hiking in autumn"</li>
+        <li>Support chat that cites the manual instead of inventing steps</li>
+        <li>Review and feedback clustering into themes</li>
+        <li>"Customers who liked this" without collaborative-filtering cold start</li>
+      </ul>
+    </div>
+    <div class="card app">
+      <h4>Engineering &amp; legal</h4>
+      <ul>
+        <li>Code and incident search: "where do we retry on 429?"</li>
+        <li>Log and alert deduplication</li>
+        <li>Due-diligence: find every clause similar to this one across 2,000 contracts</li>
+        <li>Compliance mapping between internal controls and external standards</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>What to get right.</b> <b>Chunking</b> — embed units a human would quote (a paragraph, a ticket, a clause), not whole PDFs.
+    <b>Permissions</b> — filter in SQL with the user's identity before ranking; never let the LLM be the gatekeeper.
+    <b>Evaluation</b> — keep 50 real questions with known good answers and measure recall@10 on every change of model or chunking.
+    <b>Freshness</b> — re-embed only what changed (this repo's <code>EmbeddingText</code> diff does exactly that).
+    <b>Honesty</b> — instruct the model to answer only from retrieved passages and to say when they don't cover the question.
   </div>
 </section>
 

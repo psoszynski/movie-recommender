@@ -28,7 +28,7 @@ const data = await fetch('data/movies.json').then((r) => r.json());
 const movies = data.movies;
 
 // Each section is independent: a failure in one (e.g. no WebGL) must not take the rest down.
-for (const init of [heroBackground, embeddingDemo, vectorSpace, distancePlayground, cosineMatrix, scanAnimation, annAnimation, pipelineDiagram]) {
+for (const init of [heroBackground, embeddingDemo, vectorSpace, distancePlayground, cosineMatrix, scanAnimation, annAnimation, pipelineDiagram, ragDiagram]) {
   try { init(); } catch (err) { console.error(`${init.name} failed:`, err); }
 }
 
@@ -567,11 +567,11 @@ function annAnimation() {
 }
 
 // ---------------------------------------------------------------- 06 pipeline diagram
-function pipelineDiagram() {
-  const svg = $('#pipeline-svg');
+// Shared SVG helpers for the flow diagrams (06 pipeline, 07 RAG).
+function flowKit(svg, prefix) {
   svg.innerHTML = `<defs>
-    <marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#637089"/></marker>
-    <marker id="pq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f6e05e"/></marker>
+    <marker id="${prefix}a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#637089"/></marker>
+    <marker id="${prefix}q" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f6e05e"/></marker>
   </defs>`;
   const box = (x, y, w, h, title, sub, color = '#273043') => {
     const g = el('g', {}, svg);
@@ -581,9 +581,9 @@ function pipelineDiagram() {
     return { x, y, w, h };
   };
   // Labels get a dark halo (paint-order) so they stay legible where they cross a path.
-  const label = (x, y, text) => el('text', { x, y, fill: '#8b94a7', 'font-size': 10, 'text-anchor': 'middle', 'paint-order': 'stroke', stroke: '#0f131c', 'stroke-width': 5, 'stroke-linejoin': 'round' }, svg).textContent = text;
+  const label = (x, y, text, anchor = 'middle') => el('text', { x, y, fill: '#8b94a7', 'font-size': 10, 'text-anchor': anchor, 'paint-order': 'stroke', stroke: '#0f131c', 'stroke-width': 5, 'stroke-linejoin': 'round' }, svg).textContent = text;
   const path = (d, cls) => {
-    const p = el('path', { d, fill: 'none', stroke: cls === 'query' ? '#f6e05e' : '#637089', 'stroke-width': 1.5, 'marker-end': cls === 'query' ? 'url(#pq)' : 'url(#pa)', 'stroke-dasharray': '6 5' }, svg);
+    const p = el('path', { d, fill: 'none', stroke: cls === 'query' ? '#f6e05e' : '#637089', 'stroke-width': 1.5, 'marker-end': cls === 'query' ? `url(#${prefix}q)` : `url(#${prefix}a)`, 'stroke-dasharray': '6 5' }, svg);
     if (!reduceMotion) el('animate', { attributeName: 'stroke-dashoffset', from: 22, to: 0, dur: '1.2s', repeatCount: 'indefinite' }, p);
   };
   const arrow = (a, b, text, cls = 'build') => {
@@ -592,6 +592,14 @@ function pipelineDiagram() {
     path(`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`, cls);
     if (text) label(mx, (y1 + y2) / 2 - 8, text);
   };
+  const heading = (x, y, text, color) => el('text', { x, y, fill: color, 'font-size': 11, 'font-family': 'monospace', 'letter-spacing': 1 }, svg).textContent = text;
+  return { box, label, path, arrow, heading };
+}
+
+// ---------------------------------------------------------------- 06 pipeline diagram
+function pipelineDiagram() {
+  const svg = $('#pipeline-svg');
+  const { box, label, path, arrow } = flowKit(svg, 'p');
 
   // Build-time row
   el('text', { x: 20, y: 24, fill: '#4fd1c5', 'font-size': 11, 'font-family': 'monospace', 'letter-spacing': 1 }, svg).textContent = 'BUILD TIME';
@@ -617,6 +625,36 @@ function pipelineDiagram() {
   label(ol.x + ol.w + 35, ol.y + 75, 'query vector');
   path(`M${db.x + db.w / 2} ${db.y + db.h} C${db.x + db.w / 2} ${res.y + 25} ${res.x - 40} ${res.y + 25} ${res.x} ${res.y + 25}`, 'query');
   label(db.x + db.w / 2 + 50, res.y + 12, 'VECTOR_DISTANCE');
+}
+
+// ---------------------------------------------------------------- 07 RAG flow
+function ragDiagram() {
+  const svg = $('#rag-svg');
+  const { box, label, path, arrow, heading } = flowKit(svg, 'r');
+  const Y = '#f6e05e', T = '#4fd1c5', B = '#7c9cff';
+
+  heading(16, 22, 'OFFLINE · once per document', T);
+  const docs = box(16, 36, 110, 54, 'Documents', 'PDF, wiki, tickets');
+  const embedA = box(172, 36, 84, 54, 'Embed', 'per chunk', B);
+  const db = box(316, 36, 228, 84, 'SQL Server', 'Chunks', T);
+  el('text', { x: 430, y: 104, fill: '#8b94a7', 'font-size': 10, 'text-anchor': 'middle', 'font-family': 'monospace' }, svg).textContent = 'Text · Embedding · Dept · ACL';
+  arrow(docs, embedA, 'chunks');
+  arrow(embedA, db, 'vector(768)');
+
+  heading(16, 186, 'ONLINE · every question', Y);
+  const user = box(16, 200, 120, 54, 'User asks', '"how do we…?"', Y);
+  const embedQ = box(176, 200, 100, 54, 'Embed', 'one model call', B);
+  const llm = box(385, 168, 90, 40, 'LLM', null, B);
+  const answer = box(330, 240, 214, 54, 'Grounded answer', 'with citations', Y);
+  arrow(user, embedQ, null, 'query');
+  // query vector up into the DB; permissions are a plain WHERE on the same row
+  path(`M${embedQ.x + embedQ.w} 227 C300 227 300 100 ${db.x} 100`, 'query');
+  label(276, 150, 'WHERE user may read', 'end');
+  label(276, 163, 'ORDER BY distance TOP 5', 'end');
+  // top-k chunks straight down into the prompt, then the answer
+  path(`M430 ${db.y + db.h} L430 ${llm.y}`, 'query');
+  label(440, 150, 'top-5 chunks + question', 'start');
+  path(`M430 ${llm.y + llm.h} L430 ${answer.y}`, 'query');
 }
 
 // ---------------------------------------------------------------- utils
