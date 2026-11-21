@@ -43,6 +43,7 @@ builder.Services.AddScoped<MovieLensImporter>();
 builder.Services.AddScoped<EnrichService>();
 builder.Services.AddScoped<EmbedService>();
 builder.Services.AddScoped<RecommendationService>();
+builder.Services.AddScoped<VizExportService>();
 
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
@@ -133,6 +134,14 @@ try
             Console.WriteLine($"Tags:              {await db.Tags.CountAsync(ct),8}");
             break;
         }
+
+        case "export-viz":
+            // Snapshot of the vector space for the interactive explainer in docs/.
+            await sp.GetRequiredService<VizExportService>().RunAsync(
+                outputPath: positional.FirstOrDefault() ?? "docs/data/movies.json",
+                minRatings: IntFlag("min-ratings") ?? 5,
+                ct);
+            break;
 
         case "reset":
         {
@@ -239,6 +248,8 @@ static int Usage(string? error)
           sync    [...same flags]       migrate + import + enrich + embed in one go
           stats                         show pipeline progress
           reset                         drop and recreate the database
+          export-viz [path] [--min-ratings N]
+                                        export PCA-projected vectors for the docs/ explainer page
 
         Queries (all accept --genre X --min-rating 3.5 --min-ratings 20 --after 1990 --before 2010 --top 10):
           search   <free text>          e.g. search "a lonely robot finds love" --after 2000

@@ -8,7 +8,10 @@ recommendation engine, entirely on your Mac:
 - **Ollama + nomic-embed-text** — free, local embeddings via `Microsoft.Extensions.AI`
 - Plot overviews from **TMDB** (optional API key) or **Wikipedia** (no key)
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams and the "why" behind each piece.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams and the "why" behind each piece, or open the
+**[interactive explainer](https://psoszynski.github.io/movie-recommender/)** — a web page built
+from this project's real embeddings that walks through embedding, vector distance, exact scan vs.
+DiskANN indexing (see [§7](#7-interactive-explainer-page-docs)).
 
 ---
 
@@ -137,6 +140,27 @@ DECLARE @q vector(768) = (SELECT TOP 1 Embedding FROM Movies WHERE Title = 'The 
 SELECT TOP 5 Title, VECTOR_DISTANCE('cosine', Embedding, @q) AS dist
 FROM Movies WHERE Embedding IS NOT NULL ORDER BY dist;
 ```
+
+## 7. Interactive explainer page (`docs/`)
+
+`docs/` is a static site (three.js + SVG, no build step) that explains how semantic indexing works
+using the vectors from *your* database:
+
+1. **Embeddings** — the exact text composed per movie, its 768 floats, and Ollama vs. Azure AI Foundry code.
+2. **Vector space** — 3,650 movies projected to 3-D with PCA; hover/click to see true 768-d neighbours, or fire real queries.
+3. **Distance** — drag two vectors to see cosine / euclidean / dot change; real cosine matrix between stored vectors.
+4. **Database** — `vector(768)` schema, EF Core LINQ, and an animated `VECTOR_DISTANCE` full scan.
+5. **Indexing** — DiskANN greedy graph search animation + `CREATE VECTOR INDEX` / `VECTOR_SEARCH` (not yet used in this repo).
+
+Regenerate the data file after re-embedding (needs Ollama for the sample queries):
+
+```sh
+dotnet run -- export-viz                 # writes docs/data/movies.json (~1 MB, movies with ≥5 ratings)
+dotnet run -- export-viz --min-ratings 1 # include every movie
+python3 -m http.server 8765 -d docs      # preview at http://localhost:8765/
+```
+
+To publish on GitHub Pages: repo **Settings → Pages → Deploy from a branch → `main` / `/docs`**.
 
 ## Configuration (environment variables)
 
