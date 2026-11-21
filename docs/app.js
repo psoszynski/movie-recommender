@@ -300,6 +300,15 @@ function vectorSpace() {
     downAt = null;
   });
 
+  // Double-click toggles full screen; Esc leaves it. The ResizeObserver below re-fits the renderer.
+  const wrap = host.closest('.space-wrap');
+  const setFullscreen = (on) => {
+    wrap.classList.toggle('fullscreen', on);
+    document.body.classList.toggle('space-fullscreen', on);
+  };
+  renderer.domElement.addEventListener('dblclick', () => setFullscreen(!wrap.classList.contains('fullscreen')));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setFullscreen(false); });
+
   const resize = () => {
     const w = host.clientWidth, h = host.clientHeight;
     if (!w || !h) return;

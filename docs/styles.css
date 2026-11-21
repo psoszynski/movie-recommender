@@ -103,7 +103,7 @@ main { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
 
 /* ---------- 02 space ---------- */
 .space-wrap { display: grid; grid-template-columns: 1fr 280px; gap: 0; padding: 0; overflow: hidden; }
-.space-canvas { position: relative; height: 620px; background: radial-gradient(800px 500px at 50% 60%, #121a2e 0%, #0a0d14 70%); cursor: grab; }
+.space-canvas { position: relative; height: 620px; background: radial-gradient(800px 500px at 50% 60%, #121a2e 0%, #0a0d14 70%); cursor: grab; user-select: none; }
 .space-canvas:active { cursor: grabbing; }
 .space-canvas canvas { display: block; position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
 .space-tooltip { position: absolute; pointer-events: none; background: rgba(11,14,20,0.92); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.7rem; font-size: 0.8rem; max-width: 260px; z-index: 3; }
@@ -111,6 +111,11 @@ main { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
 .space-tooltip .g { color: var(--accent-2); font-size: 0.72rem; }
 .space-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-family: var(--mono); font-size: 0.85rem; }
 .space-side { border-left: 1px solid var(--line); padding: 1rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; max-height: 620px; background: var(--card); }
+.space-wrap.fullscreen { position: fixed; inset: 0; z-index: 100; border-radius: 0; border: 0; grid-template-columns: 1fr 280px; }
+.space-wrap.fullscreen .space-canvas { height: 100vh; }
+.space-wrap.fullscreen .space-side { max-height: 100vh; }
+body.space-fullscreen { overflow: hidden; }
+kbd { font-family: var(--mono); font-size: 0.8em; border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3em; }
 .query-list { display: grid; gap: 0.35rem; }
 .query-list button { font: inherit; text-align: left; font-size: 0.82rem; background: var(--card-2); border: 1px solid var(--line); color: #d6dbe6; padding: 0.5rem 0.65rem; border-radius: 8px; cursor: pointer; }
 .query-list button:hover { border-color: var(--accent); }
