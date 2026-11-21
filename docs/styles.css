@@ -105,7 +105,7 @@ main { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
 .space-wrap { display: grid; grid-template-columns: 1fr 280px; gap: 0; padding: 0; overflow: hidden; }
 .space-canvas { position: relative; height: 620px; background: radial-gradient(800px 500px at 50% 60%, #121a2e 0%, #0a0d14 70%); cursor: grab; }
 .space-canvas:active { cursor: grabbing; }
-.space-canvas canvas { display: block; }
+.space-canvas canvas { display: block; position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
 .space-tooltip { position: absolute; pointer-events: none; background: rgba(11,14,20,0.92); border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.7rem; font-size: 0.8rem; max-width: 260px; z-index: 3; }
 .space-tooltip b { display: block; }
 .space-tooltip .g { color: var(--accent-2); font-size: 0.72rem; }

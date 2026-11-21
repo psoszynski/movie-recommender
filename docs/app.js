@@ -302,7 +302,9 @@ function vectorSpace() {
 
   const resize = () => {
     const w = host.clientWidth, h = host.clientHeight;
-    renderer.setSize(w, h, false);
+    if (!w || !h) return;
+    // updateStyle=true pins the CSS size to w×h; the backing store is w×h×devicePixelRatio.
+    renderer.setSize(w, h, true);
     camera.aspect = w / h; camera.updateProjectionMatrix();
     mat.uniforms.uScale.value = h / 620;
   };
