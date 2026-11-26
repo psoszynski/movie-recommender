@@ -6,9 +6,9 @@ using MovieRecommender.Models;
 namespace MovieRecommender.Services;
 
 /// <summary>Optional relational filters that are combined with the vector similarity.</summary>
-public sealed record SearchFilters(string? Genre, double? MinRating, int? MinRatings, int? YearFrom, int? YearTo, int Top = 10);
+public sealed record SearchFilters(string? Genre, double? MinRating, int? MinRatings, int? YearFrom, int? YearTo, int Top = 10, string? MediaType = null);
 
-public sealed record Hit(int MovieId, string Title, int? Year, string Genres, double? AvgRating, int RatingCount, double Distance, string? OverviewSnippet);
+public sealed record Hit(int MovieId, string Title, int? Year, string Genres, double? AvgRating, int RatingCount, double Distance, string? OverviewSnippet, string MediaType);
 
 /// <summary>
 /// The payoff: vector similarity *inside* ordinary LINQ queries, side by side with
@@ -86,6 +86,7 @@ public sealed class RecommendationService(MovieDbContext db, EmbedService embedS
         IQueryable<Movie> q = db.Movies.Where(m => m.Embedding != null);
 
         // Each filter becomes a plain WHERE clause in the same SQL statement as the vector sort.
+        if (f.MediaType is not null) q = q.Where(m => m.MediaType == f.MediaType);
         if (f.Genre is not null) q = q.Where(m => EF.Functions.Like(m.Genres, $"%{f.Genre}%"));
         if (f.MinRating is not null) q = q.Where(m => m.AvgRating >= f.MinRating);
         if (f.MinRatings is not null) q = q.Where(m => m.RatingCount >= f.MinRatings);
@@ -98,7 +99,7 @@ public sealed class RecommendationService(MovieDbContext db, EmbedService embedS
         var rows = await q
             .Select(m => new
             {
-                m.MovieId, m.Title, m.Year, m.Genres, m.AvgRating, m.RatingCount,
+                m.MovieId, m.Title, m.Year, m.Genres, m.AvgRating, m.RatingCount, m.MediaType,
                 Distance = EF.Functions.VectorDistance("cosine", m.Embedding!.Value, vec),
                 // Truncate server-side (translates to SUBSTRING) so we don't ship full overviews.
                 OverviewSnippet = m.Overview == null || m.Overview == "" ? null : m.Overview.Substring(0, 80),
@@ -107,6 +108,6 @@ public sealed class RecommendationService(MovieDbContext db, EmbedService embedS
             .Take(f.Top)
             .ToListAsync(ct);
 
-        return rows.Select(x => new Hit(x.MovieId, x.Title, x.Year, x.Genres, x.AvgRating, x.RatingCount, x.Distance, x.OverviewSnippet)).ToList();
+        return rows.Select(x => new Hit(x.MovieId, x.Title, x.Year, x.Genres, x.AvgRating, x.RatingCount, x.Distance, x.OverviewSnippet, x.MediaType)).ToList();
     }
 }

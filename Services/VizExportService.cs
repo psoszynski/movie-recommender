@@ -35,7 +35,7 @@ public sealed class VizExportService(MovieDbContext db, EmbedService embed, ILog
     public async Task RunAsync(string outputPath, int minRatings, CancellationToken ct)
     {
         var rows = await db.Movies
-            .Where(m => m.Embedding != null && m.RatingCount >= minRatings)
+            .Where(m => m.Embedding != null && m.Source == "movielens" && m.RatingCount >= minRatings)
             .OrderBy(m => m.MovieId)
             .Select(m => new
             {

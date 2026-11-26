@@ -17,7 +17,7 @@ partial class MovieDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261116214128_InitialCreate";
+    public override string LastMigrationId => "20261126113138_AddMediaTypeAndSource";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -51,11 +51,25 @@ partial class MovieDbContextModelSnapshot : ModelSnapshot
                     .HasMaxLength(200)
                     .HasColumnType("nvarchar(200)");
 
+                b.Property<string>("MediaType")
+                    .IsRequired()
+                    .ValueGeneratedOnAdd()
+                    .HasMaxLength(10)
+                    .HasColumnType("nvarchar(10)")
+                    .HasDefaultValue("movie");
+
                 b.Property<string>("Overview")
                     .HasColumnType("nvarchar(max)");
 
                 b.Property<int>("RatingCount")
                     .HasColumnType("int");
+
+                b.Property<string>("Source")
+                    .IsRequired()
+                    .ValueGeneratedOnAdd()
+                    .HasMaxLength(20)
+                    .HasColumnType("nvarchar(20)")
+                    .HasDefaultValue("movielens");
 
                 b.Property<string>("Title")
                     .IsRequired()
@@ -72,9 +86,9 @@ partial class MovieDbContextModelSnapshot : ModelSnapshot
 
                 b.HasIndex("AvgRating");
 
-                b.HasIndex("TmdbId");
-
                 b.HasIndex("Year");
+
+                b.HasIndex("MediaType", "TmdbId");
 
                 b.ToTable("Movies");
             });

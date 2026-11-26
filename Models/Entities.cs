@@ -29,8 +29,16 @@ public class Movie
     [MaxLength(200)]
     public required string Genres { get; set; }
 
-    /// <summary>From links.csv; used to call TMDB for the overview.</summary>
+    /// <summary>From links.csv (or the TMDB import); used to call TMDB for the overview.</summary>
     public int? TmdbId { get; set; }
+
+    /// <summary>"movie" or "tv". TMDB movie and TV ids live in separate namespaces.</summary>
+    [MaxLength(10)]
+    public string MediaType { get; set; } = "movie";
+
+    /// <summary>"movielens" (has user ratings) or "tmdb" (ratings are TMDB vote aggregates, 0–5 scale).</summary>
+    [MaxLength(20)]
+    public string Source { get; set; } = "movielens";
 
     /// <summary>Plot summary fetched by the `enrich` command.</summary>
     public string? Overview { get; set; }

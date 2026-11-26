@@ -40,6 +40,7 @@ builder.Services.AddSingleton<IOverviewProvider>(sp =>
 });
 
 builder.Services.AddScoped<MovieLensImporter>();
+builder.Services.AddScoped<TmdbImporter>();
 builder.Services.AddScoped<EnrichService>();
 builder.Services.AddScoped<EmbedService>();
 builder.Services.AddScoped<RecommendationService>();
@@ -71,6 +72,22 @@ try
             await sp.GetRequiredService<MovieDbContext>().Database.MigrateAsync(ct);
             await sp.GetRequiredService<MovieLensImporter>().RunAsync(ct);
             break;
+
+        case "import-tmdb":
+        {
+            if (AppSettings.TmdbApiKey is not { Length: > 0 } tmdbKey) return Usage("import-tmdb needs the TMDB_API_KEY environment variable");
+            var moviesOnly = flags.ContainsKey("movies-only");
+            var tvOnly = flags.ContainsKey("tv-only");
+            await sp.GetRequiredService<MovieDbContext>().Database.MigrateAsync(ct);
+            await sp.GetRequiredService<TmdbImporter>().RunAsync(tmdbKey, new TmdbImportOptions(
+                MovieFromYear: IntFlag("from-year") ?? 2023,
+                MinMovieVotes: IntFlag("min-votes") ?? 100,
+                MinTvVotes: IntFlag("tv-min-votes") ?? 100,
+                MaxPagesPerSlice: IntFlag("max-pages") ?? 500,
+                IncludeMovies: !tvOnly,
+                IncludeTv: !moviesOnly), ct);
+            break;
+        }
 
         case "enrich":
             await sp.GetRequiredService<EnrichService>().RunAsync(
@@ -130,8 +147,15 @@ try
             Console.WriteLine($"  overview missing:{await db.Movies.CountAsync(m => m.Overview == "", ct),8}");
             Console.WriteLine($"  not yet tried:   {await db.Movies.CountAsync(m => m.Overview == null, ct),8}");
             Console.WriteLine($"  with embedding:  {await db.Movies.CountAsync(m => m.Embedding != null, ct),8}");
+            Console.WriteLine($"  from TMDB:       {await db.Movies.CountAsync(m => m.Source == "tmdb", ct),8}");
+            Console.WriteLine($"  series:          {await db.Movies.CountAsync(m => m.MediaType == "tv", ct),8}");
             Console.WriteLine($"Ratings:           {await db.Ratings.CountAsync(ct),8}");
             Console.WriteLine($"Tags:              {await db.Tags.CountAsync(ct),8}");
+            // Allocated size of the data files (SQL Server pre-grows files, so this can exceed the data actually used).
+            var sizeMb = await db.Database
+                .SqlQuery<decimal>($"SELECT CAST(SUM(size) * 8.0 / 1024 AS decimal(18,1)) AS Value FROM sys.database_files WHERE type = 0")
+                .SingleAsync(ct);
+            Console.WriteLine($"Database size:     {sizeMb,8:F1} MB (data files)");
             break;
         }
 
@@ -175,7 +199,8 @@ SearchFilters Filters() => new(
     MinRatings: IntFlag("min-ratings"),
     YearFrom: IntFlag("after"),
     YearTo: IntFlag("before"),
-    Top: IntFlag("top") ?? 10);
+    Top: IntFlag("top") ?? 10,
+    MediaType: flags.GetValueOrDefault("type"));
 
 int? IntFlag(string name) => flags.TryGetValue(name, out var v) && int.TryParse(v, out var i) ? i : null;
 double? DoubleFlag(string name) => flags.TryGetValue(name, out var v) && double.TryParse(v, System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : null;
@@ -225,7 +250,7 @@ static void PrintHits(string heading, List<Hit> hits)
             $"[grey]{h.Distance:F3}[/]",
             h.AvgRating is double r ? $"[{ratingColor}]{r:F2}[/]" : "[grey]–[/]",
             h.RatingCount.ToString(),
-            $"[bold]{Markup.Escape(h.Title)}[/] [grey]({h.Year})[/]",
+            $"[bold]{Markup.Escape(h.Title)}[/] [grey]({h.Year})[/]{(h.MediaType == "tv" ? " [magenta]TV[/]" : "")}",
             $"[blue]{Markup.Escape(h.Genres.Replace('|', ' '))}[/]",
             h.OverviewSnippet is null ? "" : $"[grey]{Markup.Escape(h.OverviewSnippet.TrimEnd())}…[/]");
     }
@@ -242,6 +267,9 @@ static int Usage(string? error)
         Pipeline:
           migrate                       apply EF migrations (creates the MovieRec database)
           import                        download MovieLens ml-latest-small and load it
+          import-tmdb [--from-year 2023] [--min-votes 100] [--tv-min-votes 100] [--max-pages 500]
+                      [--movies-only | --tv-only]
+                                        add popular TMDB movies (from --from-year) and series (any year); needs TMDB_API_KEY
           enrich  [--limit N] [--concurrency N]
                                         fetch plot overviews (TMDB if TMDB_API_KEY set, else Wikipedia)
           embed   [--force] [--batch N] compute embeddings via Ollama for movies without one
@@ -251,7 +279,7 @@ static int Usage(string? error)
           export-viz [path] [--min-ratings N]
                                         export PCA-projected vectors for the docs/ explainer page
 
-        Queries (all accept --genre X --min-rating 3.5 --min-ratings 20 --after 1990 --before 2010 --top 10):
+        Queries (all accept --type movie|tv --genre X --min-rating 3.5 --min-ratings 20 --after 1990 --before 2010 --top 10):
           search   <free text>          e.g. search "a lonely robot finds love" --after 2000
           similar  <title>              e.g. similar "The Matrix" --genre Sci-Fi
           for-user <userId>             e.g. for-user 42 --min-ratings 50

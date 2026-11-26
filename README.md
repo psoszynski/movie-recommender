@@ -88,6 +88,24 @@ stored `EmbeddingText` no longer matches and the movie is re-embedded on the nex
 
 Check progress at any time with `dotnet run -- stats`.
 
+### Adding newer movies and series from TMDB (optional, needs `TMDB_API_KEY`)
+
+MovieLens `ml-latest-small` stops in 2018‑2019. To add newer titles:
+
+```sh
+dotnet run -- import-tmdb          # popular movies from 2023 + popular series of any year
+dotnet run -- embed
+dotnet run -- search "a detective drama set in a small town" --type tv
+```
+
+Flags: `--from-year 2023`, `--min-votes 100` (movies), `--tv-min-votes 100`, `--max-pages 500`
+(per slice), `--movies-only` / `--tv-only`. Queries accept `--type movie|tv`.
+
+TMDB rows have `Source = "tmdb"` and **no per-user ratings**: `AvgRating` is TMDB's
+`vote_average / 2` (0–5) and `RatingCount` is `vote_count`. They appear in `search`, `similar` and `for-user` results (but never shape a user's taste vector), and `export-viz` still exports MovieLens titles only.
+Overviews come with the TMDB results, so `enrich` is not needed for them. The command is
+idempotent: titles already in the database are skipped.
+
 ## 5. Query
 
 All query commands accept the same filters:
