@@ -116,7 +116,6 @@ main { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
 .search-results { display: flex; flex-direction: column; gap: 2px; margin-top: 0.3rem; }
 .search-results button { text-align: left; background: transparent; color: inherit; border: 0; border-radius: 6px; padding: 0.25rem 0.4rem; font: inherit; font-size: 0.8rem; cursor: pointer; }
 .search-results button:hover { background: rgba(255,255,255,0.07); }
-.check.subtle { opacity: 0.65; font-size: 0.75rem; margin-top: 0.4rem; }
 .space-wrap.fullscreen { position: fixed; inset: 0; z-index: 100; border-radius: 0; border: 0; grid-template-columns: 1fr 280px; }
 .space-wrap.fullscreen .space-canvas { height: 100vh; }
 .space-wrap.fullscreen .space-side { max-height: 100vh; }

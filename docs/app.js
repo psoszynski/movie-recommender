@@ -228,7 +228,6 @@ function vectorSpace() {
   // Interaction state
   let hovered = -1, pinned = -1, activeQuery = -1;
   let searchHits = new Set();
-  let fly = null;
   const raycaster = new THREE.Raycaster();
   raycaster.params.Points.threshold = 0.03;
   const mouse = new THREE.Vector2(2, 2);
@@ -297,48 +296,31 @@ function vectorSpace() {
   const norm = (s) => s.normalize('NFD').replace(/\p{M}/g, '').toLowerCase();
   const titles = movies.map((m) => norm(m.t));
   const searchInput = $('#space-search'), searchStatus = $('#search-status'), searchResults = $('#search-results');
-  const flyTo = (target, dist) => {
-    const offset = camera.position.clone().sub(controls.target);
-    const d = dist ?? THREE.MathUtils.clamp(offset.length(), 1.5, 2.2);
-    fly = {
-      t0: performance.now(),
-      fromT: controls.target.clone(), toT: target.clone(),
-      fromP: camera.position.clone(), toP: target.clone().add(offset.normalize().multiplyScalar(d)),
-    };
-  };
-  let firstHit = -1;
-  const flyToMovie = (i) => flyTo(new THREE.Vector3(...movies[i].p));
   const runSearch = () => {
     const q = norm(searchInput.value.trim());
     searchResults.innerHTML = '';
     if (q.length < 2) {
-      searchHits = new Set(); firstHit = -1; searchStatus.textContent = '';
+      searchHits = new Set(); searchStatus.textContent = '';
       recolor(); return;
     }
     const found = [];
     for (let i = 0; i < n; i++) if (titles[i].includes(q)) found.push(i);
     found.sort((a, b) => (titles[b].startsWith(q) - titles[a].startsWith(q)) || movies[b].n - movies[a].n);
     searchHits = new Set(found);
-    firstHit = found[0] ?? -1;
     searchStatus.textContent = found.length ? `${fmt(found.length)} match${found.length === 1 ? '' : 'es'}` : 'no matches';
     found.slice(0, 8).forEach((i) => {
       const b = document.createElement('button');
       b.innerHTML = `${escapeHtml(movies[i].t)} <span class="muted">(${movies[i].y ?? '–'})</span>${movies[i].ty === 'tv' ? ' <span class="muted">TV</span>' : ''}`;
-      b.onclick = () => { pin(i); if ($('#opt-fly').checked) flyToMovie(i); };
+      b.onclick = () => pin(i);
       searchResults.appendChild(b);
     });
     recolor();
-    if (found.length && $('#opt-fly').checked) flyToMovie(found[0]);
   };
   let searchTimer;
   searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 120); });
   searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { searchInput.value = ''; runSearch(); }
     if (e.key === 'Enter') searchResults.querySelector('button')?.click();
-  });
-  $('#opt-fly').addEventListener('change', (e) => {
-    if (e.target.checked) { if (firstHit >= 0) flyToMovie(firstHit); }
-    else flyTo(new THREE.Vector3(0, 0, 0), 3.2);
   });
 
   renderer.domElement.addEventListener('pointermove', (e) => {
@@ -377,13 +359,6 @@ function vectorSpace() {
   $('#space-loading').remove();
 
   const render = () => {
-    if (fly) {
-      const k = Math.min(1, (performance.now() - fly.t0) / 700);
-      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      controls.target.lerpVectors(fly.fromT, fly.toT, e);
-      camera.position.lerpVectors(fly.fromP, fly.toP, e);
-      if (k >= 1) fly = null;
-    }
     controls.update();
     raycaster.setFromCamera(mouse, camera);
     const hit = raycaster.intersectObject(points)[0];
