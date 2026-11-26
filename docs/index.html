@@ -39,12 +39,12 @@
       Keyword search finds the words you typed. Semantic search finds what you <em>meant</em>.
       This page walks through the mechanics — turning text into vectors, storing them in a relational
       database, finding the nearest ones, and indexing them so it stays fast — using the real
-      embeddings from a 9,742-movie recommender.
+      embeddings from a recommender of movies and TV series (<span data-count>16,287</span> titles).
     </p>
     <div class="hero-stats" id="hero-stats">
-      <div><b>9,742</b><span>movies embedded</span></div>
+      <div><b data-count>16,287</b><span>titles embedded</span></div>
       <div><b>768</b><span>dimensions each</span></div>
-      <div><b>97%</b><span>with plot overviews</span></div>
+      <div><b>98%</b><span>with plot overviews</span></div>
       <div><b>9 ms</b><span>exact scan, no index</span></div>
     </div>
     <a class="scroll-hint" href="#embed">↓ start with the text</a>
@@ -107,7 +107,7 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
 movie.Embedding = <span class="k">new</span> SqlVector&lt;<span class="k">float</span>&gt;(vectors[i].Vector);</code></pre>
       <ul class="facts">
         <li><b>768</b> dimensions, ~270 MB model</li>
-        <li><b>~70 movies/s</b> on an M-series Mac — 9,742 in 2m 23s</li>
+        <li><b>~70 movies/s</b> on an M-series Mac — the first 9,742 (MovieLens) took 2m 23s</li>
         <li>Asymmetric: prefix documents with <code>search_document:</code>, queries with <code>search_query:</code></li>
       </ul>
     </div>
@@ -139,8 +139,8 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
   <div class="section-head">
     <span class="step">02</span>
     <h2>The vector space, with real data</h2>
-    <p>Every point below is one of the <b id="space-count">3,650</b> movies from this recommender that have at least
-       five ratings. Their 768-dimensional vectors were squashed to 3-D with PCA so you can see them.
+    <p>Every point below is one of the <b id="space-count">16,287</b> movies and TV series in this recommender
+       (MovieLens titles plus newer movies and series from TMDB). Their 768-dimensional vectors were squashed to 3-D with PCA so you can see them.
        <b>Drag</b> to orbit, <b>scroll</b> to zoom, <b>hover</b> a point, <b>click</b> to pin it and see its true
        nearest neighbours. <b>Double-click</b> to go full screen (and again, or <kbd>Esc</kbd>, to come back).</p>
   </div>
@@ -148,7 +148,7 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
   <div class="space-wrap card">
     <div class="space-canvas" id="space-canvas">
       <div class="space-tooltip" id="space-tooltip" hidden></div>
-      <div class="space-loading" id="space-loading">Loading 3,650 embeddings…</div>
+      <div class="space-loading" id="space-loading">Loading embeddings…</div>
     </div>
     <aside class="space-side">
       <div class="side-block">
@@ -268,7 +268,7 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
       <svg id="scan-svg" viewBox="0 0 520 330"></svg>
       <div class="scan-controls">
         <button id="scan-play" class="btn">▶ Run query</button>
-        <span class="scan-status" id="scan-status">9,742 rows · 0 compared</span>
+        <span class="scan-status" id="scan-status"><span data-count>16,287</span> rows · 0 compared</span>
       </div>
 <pre><code><span class="k">SELECT TOP</span>(<span class="n">10</span>) Title,
        VECTOR_DISTANCE(<span class="s">'cosine'</span>, Embedding, @query) <span class="k">AS</span> Distance
@@ -276,7 +276,7 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
 <span class="k">WHERE</span>  Embedding <span class="k">IS NOT NULL AND</span> Year &gt;= <span class="n">2000</span>
 <span class="k">ORDER BY</span> Distance;</code></pre>
       <ul class="facts">
-        <li>Measured on this data: <b>9 ms</b>, <b>9,812 logical reads</b> for 9,742 rows</li>
+        <li>Measured on the original 9,742 MovieLens rows: <b>9 ms</b>, <b>9,812 logical reads</b></li>
         <li>Cost grows <b>linearly</b> with rows: 1M rows ≈ 1 s, 100M ≈ minutes</li>
         <li>Result is <b>exact</b> — 100% recall, every time</li>
         <li>Works on SQL Server 2025, Azure SQL, Fabric — no feature flags</li>
@@ -518,7 +518,7 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
 <footer class="footer">
   <p>Built from the <a href="https://github.com/psoszynski/movie-recommender">movie-recommender</a> repo.
      Data: <a href="https://grouplens.org/datasets/movielens/">MovieLens ml-latest-small</a> ratings and
-     <a href="https://www.themoviedb.org/">TMDB</a> overviews (this product uses the TMDB API but is not endorsed or certified by TMDB).
+     <a href="https://www.themoviedb.org/">TMDB</a> overviews, newer movies and series (this product uses the TMDB API but is not endorsed or certified by TMDB).
      Embeddings: nomic-embed-text via Ollama. Vector snapshot regenerated with <code>dotnet run -- export-viz</code>.</p>
   <p class="muted small">3-D scene rendered with <a href="https://threejs.org">three.js</a>; everything else is hand-written SVG.</p>
 </footer>

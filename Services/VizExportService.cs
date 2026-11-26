@@ -11,8 +11,8 @@ namespace MovieRecommender.Services;
 /// show *real* data instead of a toy illustration.
 ///
 /// What it does:
-///   1. Loads every embedded movie with at least <c>minRatings</c> ratings (keeps the file small
-///      and favours titles people recognise).
+///   1. Loads every embedded title (movies and series) with at least <c>minRatings</c> ratings
+///      (0 = everything; raise it to shrink the file and favour titles people recognise).
 ///   2. Runs PCA (768 → 3) so the browser can plot movies as points in 3-D. PCA is a linear
 ///      projection, so distances are only approximately preserved — the page says so.
 ///   3. For each movie computes its 5 nearest neighbours by cosine in the *full* 768-d space,
@@ -35,11 +35,11 @@ public sealed class VizExportService(MovieDbContext db, EmbedService embed, ILog
     public async Task RunAsync(string outputPath, int minRatings, CancellationToken ct)
     {
         var rows = await db.Movies
-            .Where(m => m.Embedding != null && m.Source == "movielens" && m.RatingCount >= minRatings)
+            .Where(m => m.Embedding != null && m.RatingCount >= minRatings)
             .OrderBy(m => m.MovieId)
             .Select(m => new
             {
-                m.MovieId, m.Title, m.Year, m.Genres, m.AvgRating, m.RatingCount,
+                m.MovieId, m.Title, m.Year, m.Genres, m.AvgRating, m.RatingCount, m.MediaType, m.Source,
                 Overview = m.Overview == null ? "" : m.Overview.Substring(0, 140),
                 m.EmbeddingText,
                 Embedding = m.Embedding!.Value,
@@ -137,6 +137,8 @@ public sealed class VizExportService(MovieDbContext db, EmbedService embed, ILog
                 g = r.Genres,
                 r = r.AvgRating is double a ? Math.Round(a, 2) : (double?)null,
                 n = r.RatingCount,
+                ty = r.MediaType,
+                s = r.Source,
                 o = r.Overview,
                 p = coords[i].Select(v => Math.Round(v, 4)).ToArray(),
                 nn = neighbours[i],

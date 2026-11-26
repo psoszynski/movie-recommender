@@ -163,7 +163,7 @@ try
             // Snapshot of the vector space for the interactive explainer in docs/.
             await sp.GetRequiredService<VizExportService>().RunAsync(
                 outputPath: positional.FirstOrDefault() ?? "docs/data/movies.json",
-                minRatings: IntFlag("min-ratings") ?? 5,
+                minRatings: IntFlag("min-ratings") ?? 0,
                 ct);
             break;
 

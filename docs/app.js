@@ -145,6 +145,7 @@ function vectorSpace() {
   const host = $('#space-canvas');
   const tooltip = $('#space-tooltip');
   $('#space-count').textContent = fmt(data.count);
+  document.querySelectorAll('[data-count]').forEach((e) => { e.textContent = fmt(data.count); });
   $('#space-var').textContent = (data.explainedVariance.reduce((a, b) => a + b, 0) * 100).toFixed(1) + '%';
 
   const scene = new THREE.Scene();
@@ -331,8 +332,8 @@ function vectorSpace() {
       if (idx >= 0) {
         const m = movies[idx];
         tooltip.hidden = false;
-        tooltip.innerHTML = `<b>${escapeHtml(m.t)} (${m.y})</b><span class="g">${m.g.replaceAll('|', ' · ')}</span>
-          <div class="muted">★ ${m.r ?? '–'} · ${fmt(m.n)} ratings</div>${m.o ? `<div class="muted small">${escapeHtml(m.o)}…</div>` : ''}`;
+        tooltip.innerHTML = `<b>${escapeHtml(m.t)} (${m.y})</b><span class="g">${m.ty === 'tv' ? 'TV series · ' : ''}${m.g.replaceAll('|', ' · ')}</span>
+          <div class="muted">★ ${m.r ?? '–'} · ${fmt(m.n)} ${m.s === 'tmdb' ? 'TMDB votes' : 'ratings'}</div>${m.o ? `<div class="muted small">${escapeHtml(m.o)}…</div>` : ''}`;
         host.style.cursor = 'pointer';
       } else { tooltip.hidden = true; host.style.cursor = ''; }
     }
@@ -441,7 +442,7 @@ function cosineMatrix() {
 function scanAnimation() {
   const svg = $('#scan-svg');
   const COLS = 28, ROWS = 12, CW = 11, CH = 11, GAP = 3, X0 = 14, Y0 = 40;
-  const TOTAL_ROWS = 9742, cells = COLS * ROWS;
+  const TOTAL_ROWS = data.count, cells = COLS * ROWS;
   el('text', { x: X0, y: 22, fill: '#8b94a7', 'font-size': 11 }, svg).textContent = `Movies table — each cell ≈ ${Math.round(TOTAL_ROWS / cells)} rows`;
   el('text', { x: 420, y: 22, fill: '#8b94a7', 'font-size': 11 }, svg).textContent = 'TOP 10';
   const grid = el('g', {}, svg);
