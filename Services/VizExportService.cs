@@ -96,11 +96,6 @@ public sealed class VizExportService(MovieDbContext db, EmbedService embed, ILog
         foreach (var q in SampleQueries)
         {
             var vec = (await embed.EmbedQueryAsync(q, ct)).Memory.ToArray();
-            var c = new double[d];
-            for (var j = 0; j < d; j++) c[j] = vec[j] - mean[j];
-            var p = Project(c, basis);
-            for (var k = 0; k < 3; k++) p[k] = p[k] * scale.Factor - scale.Offset[k];
-
             var qn = Math.Sqrt(vec.Sum(f => (double)f * f));
             var top = Enumerable.Range(0, n)
                 .Select(i => (i, dist: 1 - Dot(vec, x[i]) / (qn * norms[i])))
@@ -108,6 +103,12 @@ public sealed class VizExportService(MovieDbContext db, EmbedService embed, ILog
                 .Take(8)
                 .Select(t => new { i = t.i, dist = Math.Round(t.dist, 4) })
                 .ToArray();
+
+            // A short query vector sits systematically away from document vectors (the "modality
+            // gap"), and a 3-D PCA exaggerates that offset. So the marker is drawn at the centre of
+            // its nearest matches: PCA is linear, so this is the projection of their mean vector.
+            var p = new double[3];
+            foreach (var t in top) for (var k = 0; k < 3; k++) p[k] += coords[t.i][k] / top.Length;
 
             queries.Add(new { text = q, pos = p.Select(v => Math.Round(v, 4)).ToArray(), top });
         }

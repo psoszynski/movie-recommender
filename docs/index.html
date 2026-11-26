@@ -161,8 +161,9 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
       <div class="side-block">
         <label>Try a query</label>
         <div class="query-list" id="query-list"></div>
-        <p class="muted small">Each query was embedded with the same model and projected with the same PCA.
-           Its 8 nearest movies (by cosine in full 768-d) light up.</p>
+        <p class="muted small">Each query was embedded with the same model; its 8 nearest titles (by cosine in full 768-d) light up.
+           The yellow marker sits at the centre of those 8: a raw query vector lies off to the side of the
+           movie vectors, and a 3-D projection would exaggerate that gap.</p>
       </div>
       <div class="side-block" id="pinned-block" hidden>
         <label>Pinned</label>
