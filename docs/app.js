@@ -24,7 +24,7 @@ const GENRE_COLORS = {
   Thriller: '#ed8936', War: '#c05621', Western: '#d69e2e', '': '#718096',
 };
 
-const data = await fetch('data/movies.json').then((r) => r.json());
+const data = await fetch('data/movies.json', { cache: 'no-cache' }).then((r) => r.json());
 const movies = data.movies;
 
 // Each section is independent: a failure in one (e.g. no WebGL) must not take the rest down.
