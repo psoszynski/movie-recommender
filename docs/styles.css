@@ -111,6 +111,12 @@ main { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
 .space-tooltip .g { color: var(--accent-2); font-size: 0.72rem; }
 .space-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-family: var(--mono); font-size: 0.85rem; }
 .space-side { border-left: 1px solid var(--line); padding: 1rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; max-height: 620px; background: var(--card); }
+.search-input { width: 100%; box-sizing: border-box; background: var(--bg, #0b0e14); color: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 0.45rem 0.6rem; font: inherit; font-size: 0.85rem; }
+.search-input:focus { outline: none; border-color: var(--accent-2); }
+.search-results { display: flex; flex-direction: column; gap: 2px; margin-top: 0.3rem; }
+.search-results button { text-align: left; background: transparent; color: inherit; border: 0; border-radius: 6px; padding: 0.25rem 0.4rem; font: inherit; font-size: 0.8rem; cursor: pointer; }
+.search-results button:hover { background: rgba(255,255,255,0.07); }
+.check.subtle { opacity: 0.65; font-size: 0.75rem; margin-top: 0.4rem; }
 .space-wrap.fullscreen { position: fixed; inset: 0; z-index: 100; border-radius: 0; border: 0; grid-template-columns: 1fr 280px; }
 .space-wrap.fullscreen .space-canvas { height: 100vh; }
 .space-wrap.fullscreen .space-side { max-height: 100vh; }

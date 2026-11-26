@@ -141,7 +141,7 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
     <h2>The vector space, with real data</h2>
     <p>Every point below is one of the <b id="space-count">16,287</b> movies and TV series in this recommender
        (MovieLens titles plus newer movies and series from TMDB). Their 768-dimensional vectors were squashed to 3-D with PCA so you can see them.
-       <b>Drag</b> to orbit, <b>scroll</b> to zoom, <b>hover</b> a point, <b>click</b> to pin it and see its true
+       <b>Type</b> a title to find it, <b>drag</b> to orbit, <b>scroll</b> to zoom, <b>hover</b> a point, <b>click</b> to pin it and see its true
        nearest neighbours. <b>Double-click</b> to go full screen (and again, or <kbd>Esc</kbd>, to come back).</p>
   </div>
 
@@ -151,6 +151,13 @@ builder.Services.AddSingleton&lt;IEmbeddingGenerator&lt;string, Embedding&lt;flo
       <div class="space-loading" id="space-loading">Loading embeddings…</div>
     </div>
     <aside class="space-side">
+      <div class="side-block">
+        <label for="space-search">Find a title</label>
+        <input type="search" id="space-search" class="search-input" placeholder="e.g. matrix, breaking…" autocomplete="off" spellcheck="false">
+        <div class="muted small" id="search-status"></div>
+        <div class="search-results" id="search-results"></div>
+        <label class="check subtle"><input type="checkbox" id="opt-fly"> move camera to match</label>
+      </div>
       <div class="side-block">
         <label>Try a query</label>
         <div class="query-list" id="query-list"></div>
