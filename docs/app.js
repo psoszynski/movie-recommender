@@ -292,7 +292,7 @@ function vectorSpace() {
   $('#opt-spin').addEventListener('change', (e) => (controls.autoRotate = e.target.checked));
   $('#opt-dim').addEventListener('change', recolor);
 
-  // Title search: highlights matches (dims the rest) and lists the best ones; optional camera move.
+  // Title search: highlights matches (dims the rest) and lists the best ones.
   const norm = (s) => s.normalize('NFD').replace(/\p{M}/g, '').toLowerCase();
   const titles = movies.map((m) => norm(m.t));
   const searchInput = $('#space-search'), searchStatus = $('#search-status'), searchResults = $('#search-results');
